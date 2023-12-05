@@ -197,9 +197,8 @@ class ReducedBVAE(nn.Module):
         with torch.no_grad():
             x = self.scaler.transform(x)
             x = torch.FloatTensor(x).to(self.device)
-            mu, logvar = self.encode(x)
-            z = self.reparameterize(mu, logvar)
-            return z.cpu().numpy()
+            mu, _ = self.encode(x)
+            return mu.cpu().numpy()
 
 
 class OptimizedBVAE(BaseEstimator):
