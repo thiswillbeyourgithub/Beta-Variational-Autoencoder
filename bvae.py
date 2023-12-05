@@ -10,7 +10,6 @@ from torch.utils.data import DataLoader, random_split
 from sklearn.preprocessing import MinMaxScaler
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'  # or any {'0', '1', '2'}
-from pytorch_velo import VeLO  # https://github.com/janEbert/PyTorch-VeLO
 
 # whi and red are functions I used for printing. Can be ignored.
 try:
@@ -68,6 +67,7 @@ class ReducedBVAE(nn.Module):
                     verbose=False,
                     )
         else:
+            from pytorch_velo import VeLO  # https://github.com/janEbert/PyTorch-VeLO
             self.optimizer = VeLO(self.parameters(), weight_decay=weight_decay, num_training_steps=epochs * dataset_size, device=self.device, seed=424242)
 
         self._dataset_loaded = False
