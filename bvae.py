@@ -44,7 +44,9 @@ class ReducedBVAE(nn.Module):
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         self.use_VeLO = use_VeLO
         self.beta = beta
-        self.scaler = MinMaxScaler()
+        margin = 0.0001
+        # constrain the minmax to exclude 0 and 1 otherwise BCE fails
+        self.scaler = MinMaxScaler(feature_range=(margin, 1-margin), clip=False)
 
         # Model architecture
         mean_dim = (hidden_dim + z_dim) // 2
