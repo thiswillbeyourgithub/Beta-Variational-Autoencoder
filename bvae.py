@@ -240,6 +240,7 @@ class OptimizedBVAE:
         batch_size = dataset.shape[0] // 4
         best_params = {}
         self.params['use_VeLO'] = False
+        self.params["epochs"] = 1000
         stored_loaders = None # stores the dataset
 
         best_loss = float('inf')
@@ -272,7 +273,7 @@ class OptimizedBVAE:
                             ]
 
                 loss = model.train_bvae(
-                        patience=10,
+                        patience=50,
                         )
                 if loss < best_loss:
                     best_loss = loss
@@ -284,11 +285,12 @@ class OptimizedBVAE:
         self.params['hidden_dim'] = best_params["hidden_dim"]
         self.params['beta'] = best_params["beta"]
         self.params['use_VeLO'] = False
+        self.params["epochs"] = 5000
         # batch_size = max(1, dataset.shape[0] // 4)
         red(f"Real training with beta {best_params['beta']}, hidden_dim {best_params['hidden_dim']}/{len(dataset)}, batch_size {batch_size}. Best loss was {best_loss}")
         model = ReducedBVAE(**self.params)
         model.scaler, model.train_loader, model.val_loader, model._dataset_loaded = stored_loaders
-        model.train_bvae(patience=None)
+        model.train_bvae(patience=100)
 
         return model
 
