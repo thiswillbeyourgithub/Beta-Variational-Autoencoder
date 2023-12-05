@@ -141,8 +141,13 @@ class ReducedBVAE(nn.Module):
         """
         train_size = int((1 - val_ratio) * len(dataset))
         val_size = len(dataset) - train_size
-        dataset = self.scaler.fit_transform(dataset)
         train_dataset, val_dataset = random_split(dataset, [train_size, val_size])
+
+        # Fit and transform the scaler only on the training data. Convert to Tensor after scaling.
+        self.scaler.fit([data.numpy() for data in train_dataset])
+        train_dataset = torch.stack([torch.tensor(self.scaler.transform(data.numpy().reshape(1, -1))).float().squeeze(0) for data in train_dataset])
+        val_dataset = torch.stack([torch.tensor(self.scaler.transform(data.numpy().reshape(1, -1))).float().squeeze(0) for data in val_dataset])
+
         train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
         val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
         best_val_loss = float('inf')
