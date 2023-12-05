@@ -235,7 +235,7 @@ class OptimizedBVAE:
         batch_size = dataset.shape[0]
         best_params = {}
         self.params['use_VeLO'] = False
-        stored_loaders = []  # stores the dataset
+        stored_loaders = None # stores the dataset
 
         best_loss = float('inf')
 
@@ -254,7 +254,7 @@ class OptimizedBVAE:
 
                 # reusing the same splits
                 if stored_loaders:
-                    model.scaler, model.train_loader, model.val_loader, model._dataset_loaded = *stored_loaders
+                    model.scaler, model.train_loader, model.val_loader, model._dataset_loaded = stored_loaders
                 else:
                     model.prepare_dataset(
                             dataset=dataset,
@@ -282,7 +282,7 @@ class OptimizedBVAE:
         # batch_size = max(1, dataset.shape[0] // 4)
         red(f"Real training with beta {best_params['beta']}, hidden_dim {best_params['hidden_dim']}/{len(dataset)}, batch_size {batch_size}. Best loss was {best_loss}")
         model = ReducedBVAE(**self.params)
-        model.scaler, model.train_loader, model.val_loader, model._dataset_loaded = *stored_loaders
+        model.scaler, model.train_loader, model.val_loader, model._dataset_loaded = stored_loaders
         model.train_bvae(batch_size=batch_size, patience=None)
 
         return model
