@@ -16,7 +16,7 @@ model = ReducedBVAE(
     lr=1e-3,
     epochs=1000,
     beta=1.0,
-    weight_decay=0.0,
+    weight_decay=0.01,
     use_VeLO=False,
     )
 model.prepare_dataset(dataset, val_ratio=0.2, batch_size=500)
