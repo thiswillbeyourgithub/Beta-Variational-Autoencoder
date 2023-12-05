@@ -20,6 +20,6 @@ model = ReducedBVAE(
     use_VeLO=False,
     )
 model.prepare_dataset(dataset, val_ratio=0.2, batch_size=500)
-model.train(patience=100)
+model.train_bvae(patience=100)
 projection = model.transform(datapoints)
 ```

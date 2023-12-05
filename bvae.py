@@ -133,7 +133,7 @@ class ReducedBVAE(nn.Module):
     def prepare_dataset(self, dataset, val_ratio=0.2, batch_size=500):
         """
         Prepare the dataset for the model. This is a separate method from
-        self.train() so that the dataset is consistently preprocessed, split
+        self.train_bvae() so that the dataset is consistently preprocessed, split
         and shuffled if the OptimizedBVAE wrapper is used.
 
         :param dataset: Dataset to train on.
@@ -153,7 +153,7 @@ class ReducedBVAE(nn.Module):
         self.val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
         self._dataset_loaded = True
 
-    def train(self, patience=100):
+    def train_bvae(self, patience=100):
         """
         Train the B-VAE model with early stopping.
 
@@ -266,7 +266,7 @@ class OptimizedBVAE:
                             model._dataset_loaded,
                             ]
 
-                loss = model.train(
+                loss = model.train_bvae(
                         patience=10,
                         )
                 if loss < best_loss:
@@ -283,6 +283,6 @@ class OptimizedBVAE:
         red(f"Real training with beta {best_params['beta']}, hidden_dim {best_params['hidden_dim']}/{len(dataset)}, batch_size {batch_size}. Best loss was {best_loss}")
         model = ReducedBVAE(**self.params)
         model.scaler, model.train_loader, model.val_loader, model._dataset_loaded = *stored_loaders
-        model.train(batch_size=batch_size, patience=None)
+        model.train_bvae(batch_size=batch_size, patience=None)
 
         return model
