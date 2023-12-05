@@ -49,12 +49,17 @@ class ReducedBVAE(nn.Module):
         self.scaler = MinMaxScaler()
 
         # Model architecture
+        mean_dim = (hidden_dim + z_dim) // 2
         self.to(self.device)
         self.fc1 = nn.Linear(input_dim, hidden_dim).to(self.device)
-        self.fc21 = nn.Linear(hidden_dim, z_dim).to(self.device)
-        self.fc22 = nn.Linear(hidden_dim, z_dim).to(self.device)
-        self.fc3 = nn.Linear(z_dim, hidden_dim).to(self.device)
-        self.fc4 = nn.Linear(hidden_dim, input_dim).to(self.device)
+        self.fc2 = nn.Linear(hidden_dim, mean_dim).to(self.device)
+
+        self.fc_mu = nn.Linear(mean_dim, z_dim).to(self.device)
+        self.fc_std = nn.Linear(mean_dim, z_dim).to(self.device)
+        self.fc3 = nn.Linear(z_dim, mean_dim).to(self.device)
+
+        self.fc4 = nn.Linear(mean_dim, hidden_dim).to(self.device)
+        self.fc5 = nn.Linear(hidden_dim, input_dim).to(self.device)
 
         if not self.use_VeLO:
             self.optimizer = optim.AdamW(self.parameters(), lr=lr)
@@ -73,8 +78,8 @@ class ReducedBVAE(nn.Module):
         :param x: Input tensor to encode.
         :return: A tuple of two tensors, mean and log variance.
         """
-        h = torch.relu(self.fc1(x))
-        return self.fc21(h), self.fc22(h)
+        h = torch.relu(self.fc2(torch.relu(self.fc1(x))))
+        return self.fc_mu(h), self.fc_std(h)
 
     def reparameterize(self, mu, logvar):
         """
@@ -95,8 +100,7 @@ class ReducedBVAE(nn.Module):
         :param z: Latent variable to decode.
         :return: Reconstructed input tensor.
         """
-        h = torch.relu(self.fc3(z))
-        return torch.sigmoid(self.fc4(h))
+        return torch.sigmoid(self.fc5(torch.relu(self.fc4(torch.relu(self.fc3(z))))))
 
     def forward(self, x):
         """
