@@ -140,6 +140,9 @@ class ReducedBVAE(nn.Module):
         :param val_ratio: Ratio of the dataset to use for validation.
         :param batch_size: Batch size for training.
         """
+        if type(dataset) == type(pd.DataFrame()):
+            dataset = dataset.values
+
         train_size = int((1 - val_ratio) * len(dataset))
         val_size = len(dataset) - train_size
         train_dataset, val_dataset = random_split(dataset, [train_size, val_size])
