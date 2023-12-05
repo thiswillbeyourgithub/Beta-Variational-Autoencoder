@@ -8,8 +8,18 @@ The optimizer used is AdamW, but `VeLO` can be used from [this repo](https://git
 ## Usage
 ```
 from bvae import ReducedBVAE
-model = ReducedBVAE()
-model.prepare_dataset(dataset)
-model.train(batch_size=batch_size)
+model = ReducedBVAE(
+    input_dim,
+    z_dim,
+    hidden_dim,
+    dataset_size,
+    lr=1e-3,
+    epochs=1000,
+    beta=1.0,
+    weight_decay=0.0,
+    use_VeLO=False,
+    )
+model.prepare_dataset(dataset, val_ratio=0.2, batch_size=500)
+model.train(patience=100)
 projection = model.transform(datapoints)
 ```
