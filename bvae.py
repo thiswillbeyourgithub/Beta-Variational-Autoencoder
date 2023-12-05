@@ -71,6 +71,8 @@ class ReducedBVAE(nn.Module):
         else:
             self.optimizer = VeLO(self.parameters(), weight_decay=weight_decay, num_training_steps=epochs * dataset_size, device=self.device, seed=424242)
 
+        self._dataset_loaded = False
+
     def encode(self, x):
         """
         Encode the input into two latent variables, mean and log variance.
@@ -130,14 +132,15 @@ class ReducedBVAE(nn.Module):
             red(f"Negative loss value: '{loss}'")
         return loss
 
-    def train_bvae(self, dataset, val_ratio=0.2, batch_size=500, patience=100):
+    def prepare_dataset(self, dataset, val_ratio=0.2, batch_size=500):
         """
-        Train the B-VAE model with early stopping.
+        Prepare the dataset for the model. This is a separate method from
+        self.train() so that the dataset is consistently preprocessed, split
+        and shuffled if the OptimizedBVAE wrapper is used.
 
         :param dataset: Dataset to train on.
         :param val_ratio: Ratio of the dataset to use for validation.
         :param batch_size: Batch size for training.
-        :param patience: Number of epochs to wait for improvement before stopping. None to disable.
         """
         train_size = int((1 - val_ratio) * len(dataset))
         val_size = len(dataset) - train_size
@@ -148,15 +151,26 @@ class ReducedBVAE(nn.Module):
         train_dataset = torch.stack([torch.tensor(self.scaler.transform(data.numpy().reshape(1, -1))).float().squeeze(0) for data in train_dataset])
         val_dataset = torch.stack([torch.tensor(self.scaler.transform(data.numpy().reshape(1, -1))).float().squeeze(0) for data in val_dataset])
 
-        train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
-        val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
+        self.train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+        self.val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
+        self._dataset_loaded = True
+
+    def train(self, patience=100):
+        """
+        Train the B-VAE model with early stopping.
+
+        :param patience: Number of epochs to wait for improvement before stopping. None to disable.
+        """
+        assert self._dataset_loaded, (
+                "self.train can only be called after "
+                "self.prepare_dataset was used")
         best_val_loss = float('inf')
         no_improvement = 0
         start = time.time()
         for epoch in range(self.epochs):
             self.train()
             train_loss = 0
-            for i, data in enumerate(train_loader):
+            for i, data in enumerate(self.train_loader):
                 data = data.to(self.device)
                 self.optimizer.zero_grad()
                 recon, mu, logvar = self(data)
@@ -167,16 +181,16 @@ class ReducedBVAE(nn.Module):
                 else:
                     self.optimizer.step()
                 train_loss += loss.item()
-            train_loss /= len(train_loader.dataset)
+            train_loss /= len(self.train_loader.dataset)
             self.eval()
             val_loss = 0
             with torch.no_grad():
-                for data in val_loader:
+                for data in self.val_loader:
                     data = data.to(self.device)
                     recon, mu, logvar = self(data)
                     loss = self.loss_function(data, recon, mu, logvar)
                     val_loss += loss.item()
-            val_loss /= len(val_loader.dataset)
+            val_loss /= len(self.val_loader.dataset)
             whi(f'Epoch {epoch}: Train Loss: {train_loss}, Val Loss: {val_loss}')
             if val_loss < best_val_loss:
                 best_val_loss = val_loss
@@ -218,6 +232,7 @@ class OptimizedBVAE(BaseEstimator):
         batch_size = dataset.shape[0]
         best_params = {}
         self.params['use_VeLO'] = False
+        stored_loaders = []  # stores the dataset
 
         best_loss = float('inf')
 
@@ -231,10 +246,24 @@ class OptimizedBVAE(BaseEstimator):
                 whi(f"Training with hidden_dim {hidden_dim}, beta {beta}, batch_size {batch_size}")
                 self.params['hidden_dim'] = hidden_dim
                 self.params['beta'] = beta
+
                 model = ReducedBVAE(**self.params)
-                loss = model.train_bvae(
-                        dataset,
-                        batch_size=batch_size,
+
+                # reusing the same splits
+                if stored_loaders:
+                    model.scaler, model.train_loader, model.val_loader, model._dataset_loaded = *stored_loaders
+                else:
+                    model.prepare_dataset(
+                            dataset=dataset,
+                            )
+                    stored_loaders = [
+                            model.scaler,
+                            model.train_loader,
+                            model.val_loader,
+                            model._dataset_loaded,
+                            ]
+
+                loss = model.train(
                         patience=10,
                         )
                 if loss < best_loss:

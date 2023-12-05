@@ -9,6 +9,7 @@ The optimizer used is AdamW, but `VeLO` can be used from [this repo](https://git
 ```
 from bvae import ReducedBVAE
 model = ReducedBVAE()
-model.train_bvae(dataset, batch_size=batch_size)
+model.prepare_dataset(dataset)
+model.train(batch_size=batch_size)
 projection = model.transform(datapoints)
 ```
