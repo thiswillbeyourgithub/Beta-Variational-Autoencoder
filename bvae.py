@@ -239,7 +239,7 @@ class OptimizedBVAE:
         beta_candidates = [10]
         batch_size = dataset.shape[0] // 4
         best_params = {}
-        self.params['use_VeLO'] = False
+        # self.params['use_VeLO'] = False
         self.params["epochs"] = 1000
         stored_loaders = None # stores the dataset
 
@@ -284,7 +284,7 @@ class OptimizedBVAE:
 
         self.params['hidden_dim'] = best_params["hidden_dim"]
         self.params['beta'] = best_params["beta"]
-        self.params['use_VeLO'] = False
+        # self.params['use_VeLO'] = False
         self.params["epochs"] = 5000
         # batch_size = max(1, dataset.shape[0] // 4)
         red(f"Real training with beta {best_params['beta']}, hidden_dim {best_params['hidden_dim']}/{len(dataset)}, batch_size {batch_size}. Best loss was {best_loss}")
