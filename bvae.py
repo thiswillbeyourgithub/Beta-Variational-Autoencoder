@@ -1,3 +1,4 @@
+import numpy as np
 import os
 import time
 import torch
@@ -294,3 +295,30 @@ class OptimizedBVAE:
         model.train_bvae(batch_size=batch_size, patience=None)
 
         return model
+
+
+if __name__ == '__main__':
+    # Sample code to test OptimizedBVAE with random DataFrame
+    features = 20    # Number of features in sample DataFrame
+    samples = 1000   # Number of samples in sample DataFrame
+    z_dim = 3        # Latent dimension size for BVAE
+
+    # Generate random DataFrame
+    dataset = pd.DataFrame(
+            np.random.rand(samples, features),
+            columns=[f'feature_{i}' for i in range(features)]
+            )
+
+    # Define Optimized BVAE
+    optimized_bvae = OptimizedBVAE(
+            input_dim=features,
+            z_dim=z_dim,
+            dataset_size=len(dataset),
+            )
+
+    # Fit Optimized BVAE
+    model = optimized_bvae.fit(dataset)
+
+    # Transform dataset
+    transformed_data = model.transform(dataset.values)
+    print(transformed_data)
