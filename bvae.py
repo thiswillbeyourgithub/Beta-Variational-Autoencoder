@@ -299,7 +299,8 @@ if __name__ == '__main__':
     # Generate random DataFrame
     dataset = pd.DataFrame(
             np.random.rand(samples, features),
-            columns=[f'feature_{i}' for i in range(features)]
+            columns=[f'feature_{i}' for i in range(features)],
+            dtype="float32",
             )
 
     # Define Optimized BVAE
