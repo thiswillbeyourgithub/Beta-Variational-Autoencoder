@@ -293,17 +293,14 @@ class OptimizedBVAE:
 
 
 if __name__ == '__main__':
+    from sklearn import datasets
     # Sample code to test OptimizedBVAE with random DataFrame
-    features = 20    # Number of features in sample DataFrame
     samples = 1000   # Number of samples in sample DataFrame
-    z_dim = 3        # Latent dimension size for BVAE
 
     # Generate random DataFrame
-    dataset = pd.DataFrame(
-            np.random.rand(samples, features),
-            columns=[f'feature_{i}' for i in range(features)],
-            dtype="float32",
-            )
+    dataset = pd.DataFrame(datasets.make_swiss_roll(n_samples=samples)[0], dtype="float32")
+    z_dim = 2  # Latent dimension size for BVAE
+    features = dataset.values.shape[1]  # Number of features in sample DataFrame
 
     # Define Optimized BVAE
     optimized_bvae = OptimizedBVAE(
