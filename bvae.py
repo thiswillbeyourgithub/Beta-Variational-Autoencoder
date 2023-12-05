@@ -65,7 +65,7 @@ class ReducedBVAE(nn.Module):
             self.optimizer = optim.AdamW(self.parameters(), lr=lr)
             self.scheduler = optim.lr_scheduler.CosineAnnealingLR(
                     self.optimizer,
-                    T_max=10,
+                    T_max=50,
                     verbose=False,
                     )
         else:
