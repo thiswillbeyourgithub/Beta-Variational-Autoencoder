@@ -287,7 +287,7 @@ class OptimizedBVAE:
         red(f"Real training with beta {best_params['beta']}, hidden_dim {best_params['hidden_dim']}/{len(dataset)}, batch_size {batch_size}. Best loss was {best_loss}")
         model = ReducedBVAE(**self.params)
         model.scaler, model.train_loader, model.val_loader, model._dataset_loaded = stored_loaders
-        model.train_bvae(batch_size=batch_size, patience=None)
+        model.train_bvae(patience=None)
 
         return model
 
