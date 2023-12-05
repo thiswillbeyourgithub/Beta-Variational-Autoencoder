@@ -6,8 +6,6 @@ import pandas as pd
 from tqdm import tqdm
 
 from torch.utils.data import DataLoader, random_split
-from sklearn.model_selection import GridSearchCV
-from sklearn.base import BaseEstimator
 from sklearn.preprocessing import MinMaxScaler
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'  # or any {'0', '1', '2'}
@@ -220,7 +218,7 @@ class ReducedBVAE(nn.Module):
             return mu.cpu().numpy()
 
 
-class OptimizedBVAE(BaseEstimator):
+class OptimizedBVAE:
     """A sklearn-compatible wrapper for the ReducedBVAE model."""
     def __init__(self, **kwargs):
         self.params = kwargs
