@@ -148,9 +148,14 @@ class ReducedBVAE(nn.Module):
         train_dataset, val_dataset = random_split(dataset, [train_size, val_size])
 
         # Fit and transform the scaler only on the training data. Convert to Tensor after scaling.
-        self.scaler.fit([data.numpy() for data in train_dataset])
-        train_dataset = torch.stack([torch.tensor(self.scaler.transform(data.numpy().reshape(1, -1))).float().squeeze(0) for data in train_dataset])
-        val_dataset = torch.stack([torch.tensor(self.scaler.transform(data.numpy().reshape(1, -1))).float().squeeze(0) for data in val_dataset])
+        if hasattr(train_dataset[0], "numpy"):
+            self.scaler.fit([data.numpy() for data in train_dataset])
+            train_dataset = torch.stack([torch.tensor(self.scaler.transform(data.numpy().reshape(1, -1))).float().squeeze(0) for data in train_dataset])
+            val_dataset = torch.stack([torch.tensor(self.scaler.transform(data.numpy().reshape(1, -1))).float().squeeze(0) for data in val_dataset])
+        else:
+            self.scaler.fit([data for data in train_dataset])
+            train_dataset = torch.stack([torch.tensor(self.scaler.transform(data.reshape(1, -1))).float().squeeze(0) for data in train_dataset])
+            val_dataset = torch.stack([torch.tensor(self.scaler.transform(data.reshape(1, -1))).float().squeeze(0) for data in val_dataset])
 
         self.train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
         self.val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
