@@ -128,7 +128,7 @@ class ReducedBVAE(nn.Module):
         """
         BCE = nn.functional.binary_cross_entropy(recon_x, x.view(-1, len(x[0])), reduction='sum')
         KLD = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())
-        whi(f"BCE: {BCE}\n    KLD: {KLD}")
+        # whi(f"BCE: {BCE}\n    KLD: {KLD}")
         loss = BCE + self.beta * KLD
         if loss < 0:
             red(f"Negative loss value: '{loss}'")
