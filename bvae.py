@@ -317,4 +317,3 @@ if __name__ == '__main__':
 
     # Transform dataset
     transformed_data = model.transform(dataset.values)
-    print(transformed_data)
