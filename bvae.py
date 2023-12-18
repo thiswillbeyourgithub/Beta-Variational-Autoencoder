@@ -25,7 +25,7 @@ except Exception as err:
 
 class ReducedBVAE(nn.Module):
     """A reduced Variational Autoencoder for dimensionality reduction."""
-    def __init__(self, input_dim, z_dim, hidden_dim, dataset_size, lr=1e-3, epochs=1000, beta=1.0, weight_decay=0.01, use_VeLO=False):
+    def __init__(self, input_dim, z_dim, hidden_dim, dataset_size, lr=1e-3, epochs=1000, beta=1.0, weight_decay=0.01, use_VeLO=False, no_variationnal=False):
         """
         Initialize the ReducedBVAE model with the specified parameters.
 
@@ -38,12 +38,14 @@ class ReducedBVAE(nn.Module):
         :param use_VeLO: optimizer. If False will use AdamW
         :param lr: Learning rate for the AdamW optimizer.
         :param weight_decay: Weight decay for regularization in VeLO.
+        :param no_variationnal: if True, don't build a variationnal autoencoder and simply build an autoencoder.
         """
         super(ReducedBVAE, self).__init__()
         self.epochs = epochs
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         self.use_VeLO = use_VeLO
         self.beta = beta
+        self.no_variationnal = no_variationnal
         margin = 0.0001
         # constrain the minmax to exclude 0 and 1 otherwise BCE fails
         self.scaler = MinMaxScaler(feature_range=(margin, 1-margin), clip=False)
@@ -54,8 +56,19 @@ class ReducedBVAE(nn.Module):
         self.fc1 = nn.Linear(input_dim, hidden_dim).to(self.device)
         self.fc2 = nn.Linear(hidden_dim, mean_dim).to(self.device)
 
-        self.fc_mu = nn.Linear(mean_dim, z_dim).to(self.device)
-        self.fc_std = nn.Linear(mean_dim, z_dim).to(self.device)
+        if self.no_variationnal:
+            self.fc_min = nn.Linear(mean_dim, z_dim).to(self.device)
+
+            self.encode = self._encode_novar
+            self.forward = self._forward_novar
+            self.loss_function = self._loss_function_novar
+        else:
+            self.fc_mu = nn.Linear(mean_dim, z_dim).to(self.device)
+            self.fc_std = nn.Linear(mean_dim, z_dim).to(self.device)
+
+            self.encode = self._encode_var
+            self.forward = self._forward_var
+            self.loss_function = self._loss_function_var
         self.fc3 = nn.Linear(z_dim, mean_dim).to(self.device)
 
         self.fc4 = nn.Linear(mean_dim, hidden_dim).to(self.device)
@@ -74,7 +87,16 @@ class ReducedBVAE(nn.Module):
 
         self._dataset_loaded = False
 
-    def encode(self, x):
+    def _encode_novar(self, x):
+        """
+        Encode the input and return the most compressed representation.
+
+        :param x: Input tensor to encode.
+        :return: A tuple of two tensors, mean and log variance.
+        """
+        return self.fc_min(torch.relu(self.fc2(torch.relu(self.fc1(x)))))
+
+    def _encode_var(self, x):
         """
         Encode the input into two latent variables, mean and log variance.
 
@@ -105,7 +127,7 @@ class ReducedBVAE(nn.Module):
         """
         return torch.sigmoid(self.fc5(torch.relu(self.fc4(torch.relu(self.fc3(z))))))
 
-    def forward(self, x):
+    def _forward_var(self, x):
         """
         Forward pass of the B-VAE model.
 
@@ -116,7 +138,16 @@ class ReducedBVAE(nn.Module):
         z = self.reparameterize(mu, logvar)
         return self.decode(z), mu, logvar
 
-    def loss_function(self, x, recon_x, mu, logvar):
+    def _forward_novar(self, x):
+        """
+        Forward pass of the AE model.
+
+        :param x: Input tensor to process.
+        :return: A tuple of three tensors, reconstructed input, mean, and log variance.
+        """
+        return self.decode(self.encode(x))
+
+    def _loss_function_var(self, x, recon_x, mu, logvar):
         """
         Compute the B-VAE loss function.
 
@@ -133,6 +164,16 @@ class ReducedBVAE(nn.Module):
         if loss < 0:
             red(f"Negative loss value: '{loss}'")
         return loss
+
+    def _loss_function_novar(self, x, recon_x):
+        """
+        Compute the AE loss function.
+
+        :param x: Original input tensor.
+        :param recon_x: Reconstructed input tensor.
+        :return: Scalar loss value.
+        """
+        return nn.functional.binary_cross_entropy(recon_x, x.view(-1, len(x[0])), reduction='sum')
 
     def prepare_dataset(self, dataset, val_ratio=0.2, batch_size=500):
         """
@@ -176,8 +217,12 @@ class ReducedBVAE(nn.Module):
             for i, data in enumerate(self.train_loader):
                 data = data.to(self.device)
                 self.optimizer.zero_grad()
-                recon, mu, logvar = self(data)
-                loss = self.loss_function(data, recon, mu, logvar)
+                if not self.no_variationnal:
+                    recon, mu, logvar = self(data)
+                    loss = self.loss_function(data, recon, mu, logvar)
+                else:
+                    recon = self(data)
+                    loss = self.loss_function(data, recon)
                 loss.backward()
                 if self.use_VeLO:
                     self.optimizer.step(lambda: self.loss_function(data, *self(data)))
@@ -190,8 +235,12 @@ class ReducedBVAE(nn.Module):
             with torch.no_grad():
                 for data in self.val_loader:
                     data = data.to(self.device)
-                    recon, mu, logvar = self(data)
-                    loss = self.loss_function(data, recon, mu, logvar)
+                    if not self.no_variationnal:
+                        recon, mu, logvar = self(data)
+                        loss = self.loss_function(data, recon, mu, logvar)
+                    else:
+                        recon = self(data)
+                        loss = self.loss_function(data, recon)
                     val_loss += loss.item()
             val_loss /= len(self.val_loader.dataset)
             whi(f'Epoch {epoch}: Train Loss: {train_loss}, Val Loss: {val_loss}')
@@ -310,6 +359,7 @@ if __name__ == '__main__':
             input_dim=features,
             z_dim=z_dim,
             dataset_size=len(dataset),
+            # no_variationnal=True,
             )
 
     # Fit Optimized BVAE
