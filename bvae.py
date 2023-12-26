@@ -290,7 +290,8 @@ class OptimizedBVAE:
         """
         hidden_dim_candidates = [int(len(dataset) * ratio) for ratio in [0.05, 0.1, 0.2, 0.5]]
         beta_candidates = [10]
-        batch_size = dataset.shape[0] // 4
+        if "batch_size" not in self.params:
+            batch_size = max(1, dataset.shape[0] // 100)
         best_params = {}
         # self.params['use_VeLO'] = False
         self.params["epochs"] = 1000
@@ -317,6 +318,7 @@ class OptimizedBVAE:
                 else:
                     model.prepare_dataset(
                             dataset=dataset,
+                            batch_size=batch_size,
                             )
                     stored_loaders = [
                             model.scaler,
