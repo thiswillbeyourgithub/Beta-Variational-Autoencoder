@@ -25,7 +25,7 @@ except Exception as err:
 
 class ReducedBVAE(nn.Module):
     """A reduced Variational Autoencoder for dimensionality reduction."""
-    def __init__(self, input_dim, z_dim, hidden_dim, dataset_size, lr=1e-3, epochs=1000, beta=1.0, weight_decay=0.01, use_VeLO=False, no_variationnal=False):
+    def __init__(self, input_dim, z_dim, hidden_dim, dataset_size, lr=1e-3, epochs=1000, beta=1.0, weight_decay=0.01, use_VeLO=False, no_variationnal=False, verbose=False):
         """
         Initialize the ReducedBVAE model with the specified parameters.
 
@@ -39,12 +39,15 @@ class ReducedBVAE(nn.Module):
         :param lr: Learning rate for the AdamW optimizer.
         :param weight_decay: Weight decay for regularization in VeLO.
         :param no_variationnal: if True, don't build a variationnal autoencoder and simply build an autoencoder.
+        :param verbose: if True, will display detailed loss information
         """
         super(ReducedBVAE, self).__init__()
         self.epochs = epochs
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         self.use_VeLO = use_VeLO
         self.beta = beta
+        self.verbose = verbose
+
         self.no_variationnal = no_variationnal
         margin = 0.0001
         # constrain the minmax to exclude 0 and 1 otherwise BCE fails
@@ -79,7 +82,7 @@ class ReducedBVAE(nn.Module):
             self.scheduler = optim.lr_scheduler.CosineAnnealingLR(
                     self.optimizer,
                     T_max=50,
-                    verbose=False,
+                    verbose=self.verbose,
                     )
         else:
             from pytorch_velo import VeLO  # https://github.com/janEbert/PyTorch-VeLO
@@ -159,7 +162,8 @@ class ReducedBVAE(nn.Module):
         """
         BCE = nn.functional.binary_cross_entropy(recon_x, x.view(-1, len(x[0])), reduction='sum')
         KLD = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())
-        # whi(f"BCE: {BCE}\n    KLD: {KLD}")
+        if self.verbose:
+            whi(f"LOSS: BCE: {BCE}    KLD: {KLD}")
         loss = BCE + self.beta * KLD
         if loss < 0:
             red(f"Negative loss value: '{loss}'")
