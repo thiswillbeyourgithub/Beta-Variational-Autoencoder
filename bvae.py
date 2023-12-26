@@ -19,8 +19,8 @@ except Exception as err:
         from misc import whi, red
         print(f"Exception when loading from .misc: '{err}'")
     except:
-        whi = print
-        red = print
+        whi = tqdm.write
+        red = tqdm.write
 
 
 class ReducedBVAE(nn.Module):
