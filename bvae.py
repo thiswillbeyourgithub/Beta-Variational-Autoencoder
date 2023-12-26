@@ -25,7 +25,7 @@ except Exception as err:
 
 class ReducedBVAE(nn.Module):
     """A reduced Variational Autoencoder for dimensionality reduction."""
-    def __init__(self, input_dim, z_dim, hidden_dim, dataset_size, lr=1e-3, epochs=1000, beta=1.0, weight_decay=0.01, use_VeLO=False, no_variationnal=False, verbose=False):
+    def __init__(self, input_dim, z_dim, hidden_dim, dataset_size, lr=1e-3, epochs=1000, beta=1.0, weight_decay=0.01, use_VeLO=False, variational=True, verbose=False):
         """
         Initialize the ReducedBVAE model with the specified parameters.
 
@@ -38,7 +38,7 @@ class ReducedBVAE(nn.Module):
         :param use_VeLO: optimizer. If False will use AdamW
         :param lr: Learning rate for the AdamW optimizer.
         :param weight_decay: Weight decay for regularization in VeLO.
-        :param no_variationnal: if True, don't build a variationnal autoencoder and simply build an autoencoder.
+        :param variational: if False, don't build a variational autoencoder and simply build an autoencoder.
         :param verbose: if True, will display detailed loss information
         """
         super(ReducedBVAE, self).__init__()
@@ -48,7 +48,7 @@ class ReducedBVAE(nn.Module):
         self.beta = beta
         self.verbose = verbose
 
-        self.no_variationnal = no_variationnal
+        self.variational = variational
         margin = 0.0001
         # constrain the minmax to exclude 0 and 1 otherwise BCE fails
         self.scaler = MinMaxScaler(feature_range=(margin, 1-margin), clip=False)
@@ -59,7 +59,7 @@ class ReducedBVAE(nn.Module):
         self.fc1 = nn.Linear(input_dim, hidden_dim).to(self.device)
         self.fc2 = nn.Linear(hidden_dim, mean_dim).to(self.device)
 
-        if self.no_variationnal:
+        if not self.variational:
             self.fc_min = nn.Linear(mean_dim, z_dim).to(self.device)
 
             self.encode = self._encode_novar
@@ -221,7 +221,7 @@ class ReducedBVAE(nn.Module):
             for i, data in enumerate(self.train_loader):
                 data = data.to(self.device)
                 self.optimizer.zero_grad()
-                if not self.no_variationnal:
+                if self.variational:
                     recon, mu, logvar = self(data)
                     loss = self.loss_function(data, recon, mu, logvar)
                 else:
@@ -239,7 +239,7 @@ class ReducedBVAE(nn.Module):
             with torch.no_grad():
                 for data in self.val_loader:
                     data = data.to(self.device)
-                    if not self.no_variationnal:
+                    if self.variational:
                         recon, mu, logvar = self(data)
                         loss = self.loss_function(data, recon, mu, logvar)
                     else:
@@ -363,7 +363,7 @@ if __name__ == '__main__':
             input_dim=features,
             z_dim=z_dim,
             dataset_size=len(dataset),
-            # no_variationnal=True,
+            variational=True,
             verbose=True,
             )
 
