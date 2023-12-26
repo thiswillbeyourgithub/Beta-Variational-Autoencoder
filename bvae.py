@@ -366,6 +366,7 @@ if __name__ == '__main__':
             z_dim=z_dim,
             dataset_size=len(dataset),
             # no_variationnal=True,
+            verbose=True,
             )
 
     # Fit Optimized BVAE
