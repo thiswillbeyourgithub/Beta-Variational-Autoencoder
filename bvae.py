@@ -114,7 +114,7 @@ class ReducedBVAE(nn.Module):
         :param x: Input tensor to encode.
         :return: A tuple of two tensors, mean and log variance.
         """
-        return self.fc_min(torch.relu(self.fc2(torch.relu(self.fc1(x)))))
+        return torch.relu(self.fc_min(torch.relu(self.fc2(torch.relu(self.fc1(x))))))
 
     def _encode_var(self, x):
         """
