@@ -25,7 +25,20 @@ except Exception as err:
 
 class ReducedBVAE(nn.Module):
     """A reduced Variational Autoencoder for dimensionality reduction."""
-    def __init__(self, input_dim, z_dim, hidden_dim, dataset_size, lr=1e-3, epochs=1000, beta=1.0, weight_decay=0.01, use_VeLO=False, variational=True, verbose=False):
+    def __init__(
+            self,
+            input_dim,
+            z_dim,
+            hidden_dim,
+            dataset_size,
+            lr=1e-3,
+            epochs=1000,
+            beta=1.0,
+            weight_decay=0.01,
+            use_VeLO=False,
+            variational=True,
+            verbose=False,
+        ):
         """
         Initialize the ReducedBVAE model with the specified parameters.
 
