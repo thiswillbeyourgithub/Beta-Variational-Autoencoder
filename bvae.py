@@ -240,11 +240,11 @@ class ReducedBVAE(nn.Module):
                 data = data.to(self.device)
                 self.optimizer.zero_grad()
                 if self.variational:
-                    recon, mu, logvar = self(data)
-                    loss = self.loss_function(data, recon, mu, logvar)
+                    recon, mu, logvar = self(data.float())
+                    loss = self.loss_function(data.float(), recon, mu, logvar)
                 else:
                     recon = self(data)
-                    loss = self.loss_function(data, recon)
+                    loss = self.loss_function(data.float(), recon)
                 loss.backward()
                 if self.use_VeLO:
                     self.optimizer.step(lambda: self.loss_function(data, *self(data)))
@@ -258,18 +258,18 @@ class ReducedBVAE(nn.Module):
                 for data in self.val_loader:
                     data = data.to(self.device)
                     if self.variational:
-                        recon, mu, logvar = self(data)
-                        loss = self.loss_function(data, recon, mu, logvar)
+                        recon, mu, logvar = self(data.float())
+                        loss = self.loss_function(data.float(), recon, mu, logvar)
                     else:
                         recon = self(data)
-                        loss = self.loss_function(data, recon)
+                        loss = self.loss_function(data.float(), recon)
                     val_loss += loss.item()
             val_loss /= len(self.val_loader.dataset)
             whi(f'Epoch {epoch}: Train Loss: {train_loss}, Val Loss: {val_loss}')
 
             # display details of the loss
             if self.variational and self.verbose:
-                self.loss_function(data, *self(data), verbose=True)
+                self.loss_function(data.float(), *self(data.float()), verbose=True)
 
             if val_loss < best_val_loss:
                 best_val_loss = val_loss
