@@ -65,7 +65,7 @@ class ReducedBVAE(nn.Module):
         self.verbose = verbose
 
         self.variational = variational
-        margin = 0.0001
+        margin = 0.0000001
         # constrain the minmax to exclude 0 and 1 otherwise BCE fails
         self.scaler = MinMaxScaler(feature_range=(margin, 1-margin), clip=False)
 
