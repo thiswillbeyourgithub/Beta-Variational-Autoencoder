@@ -370,12 +370,17 @@ if __name__ == '__main__':
     import code
     from sklearn import datasets
     import pandas as pd
-    # Sample code to test OptimizedBVAE with random DataFrame
-    samples = 10000   # Number of samples in sample DataFrame
+
+    z_dim = 2  # Latent dimension size for BVAE
 
     # Generate random DataFrame
+    samples = 10000   # Number of samples in sample DataFrame
     dataset = pd.DataFrame(datasets.make_swiss_roll(n_samples=samples)[0], dtype="float32")
-    z_dim = 2  # Latent dimension size for BVAE
+
+    # or use digits
+    dataset = pd.DataFrame(datasets.load_digits().data)
+    labels = datasets.load_digits().target
+
     features = dataset.values.shape[1]  # Number of features in sample DataFrame
 
     # # Define Optimized BVAE
@@ -398,23 +403,23 @@ if __name__ == '__main__':
             dataset_size=len(dataset),
             lr=1e-3,
             epochs=1000,
-            beta=10.0,
+            beta=100.0,
             weight_decay=0.01,
             use_VeLO=False,
             variational=True,
             verbose=True,
     )
     model.prepare_dataset(
-            dataset=dataset,
+            dataset=torch.from_numpy(dataset.values),
             batch_size=max(1, dataset.shape[0] // 100),
     )
     model.train_bvae(
-        patience=10
+        patience=20
     )
 
     # Transform dataset
     transformed_data = model.transform(dataset.values)
-    df = pd.DataFrame(transformed_data)
-    df.plot(x=0, y=1, kind="scatter")
+    df = pd.DataFrame(transformed_data, columns=["x", "y"])
+    df.plot(x="x", y="y", c=labels, kind="scatter", colormap="viridis")
 
     code.interact(local=locals())
