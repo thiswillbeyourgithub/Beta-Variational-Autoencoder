@@ -243,7 +243,7 @@ class ReducedBVAE(nn.Module):
                     recon, mu, logvar = self(data.float())
                     loss = self.loss_function(data.float(), recon, mu, logvar)
                 else:
-                    recon = self(data)
+                    recon = self(data.float())
                     loss = self.loss_function(data.float(), recon)
                 loss.backward()
                 if self.use_VeLO:
@@ -261,7 +261,7 @@ class ReducedBVAE(nn.Module):
                         recon, mu, logvar = self(data.float())
                         loss = self.loss_function(data.float(), recon, mu, logvar)
                     else:
-                        recon = self(data)
+                        recon = self(data.float())
                         loss = self.loss_function(data.float(), recon)
                     val_loss += loss.item()
             val_loss /= len(self.val_loader.dataset)
