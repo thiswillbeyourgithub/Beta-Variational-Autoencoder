@@ -362,26 +362,51 @@ class OptimizedBVAE:
 
 
 if __name__ == '__main__':
+    import code
     from sklearn import datasets
     # Sample code to test OptimizedBVAE with random DataFrame
-    samples = 1000   # Number of samples in sample DataFrame
+    samples = 10000   # Number of samples in sample DataFrame
 
     # Generate random DataFrame
     dataset = pd.DataFrame(datasets.make_swiss_roll(n_samples=samples)[0], dtype="float32")
     z_dim = 2  # Latent dimension size for BVAE
     features = dataset.values.shape[1]  # Number of features in sample DataFrame
 
-    # Define Optimized BVAE
-    optimized_bvae = OptimizedBVAE(
+    # # Define Optimized BVAE
+    # optimized_bvae = OptimizedBVAE(
+    #         input_dim=features,
+    #         z_dim=z_dim,
+    #         dataset_size=len(dataset),
+    #         variational=True,
+    #         verbose=True,
+    #         )
+
+    # # Fit Optimized BVAE
+    # model = optimized_bvae.fit(dataset)
+
+    # or fitting only one BVAE
+    model = ReducedBVAE(
             input_dim=features,
             z_dim=z_dim,
+            hidden_dim=int(len(dataset)*0.05),
             dataset_size=len(dataset),
+            lr=1e-3,
+            epochs=1000,
+            beta=1.0,
+            weight_decay=0.01,
+            use_VeLO=False,
             variational=True,
-            verbose=True,
-            )
-
-    # Fit Optimized BVAE
-    model = optimized_bvae.fit(dataset)
+            verbose=False,
+    )
+    model.prepare_dataset(
+            dataset=dataset,
+            batch_size=max(1, dataset.shape[0] // 100),
+    )
+    model.train_bvae(
+        patience=10
+    )
 
     # Transform dataset
     transformed_data = model.transform(dataset.values)
+
+    code.interact(local=locals())
