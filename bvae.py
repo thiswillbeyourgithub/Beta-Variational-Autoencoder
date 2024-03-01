@@ -247,7 +247,7 @@ class ReducedBVAE(nn.Module):
                     loss = self.loss_function(data.float(), recon)
                 loss.backward()
                 if self.use_VeLO:
-                    self.optimizer.step(lambda: self.loss_function(data, *self(data)))
+                    self.optimizer.step(lambda: self.loss_function(data.float(), *self(data.float())))
                 else:
                     self.optimizer.step()
                 train_loss += loss.item()
