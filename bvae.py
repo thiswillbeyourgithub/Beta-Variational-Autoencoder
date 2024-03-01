@@ -412,7 +412,7 @@ if __name__ == '__main__':
             hidden_dim=hidden_dim,
             dataset_size=len(dataset),
             lr=1e-3,
-            epochs=200,
+            epochs=500,
             beta=1.0,
             weight_decay=0.01,
             use_VeLO=False,
