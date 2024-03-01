@@ -417,7 +417,7 @@ if __name__ == '__main__':
             weight_decay=0.01,
             use_VeLO=False,
             use_scheduler=True,
-            variational=False,
+            variational=True,
             verbose=True,
     )
     model.prepare_dataset(
