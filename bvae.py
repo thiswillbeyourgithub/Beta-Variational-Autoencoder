@@ -295,7 +295,10 @@ class ReducedBVAE(nn.Module):
         with torch.no_grad():
             x = self.scaler.transform(x)
             x = torch.FloatTensor(x).to(self.device)
-            mu, _ = self.encode(x)
+            if self.variational:
+                mu, _ = self.encode(x)
+            else:
+                mu = self.encode(x)
             return mu.cpu().numpy()
 
 
