@@ -369,6 +369,7 @@ class OptimizedBVAE:
 if __name__ == '__main__':
     import code
     from sklearn import datasets
+    import pandas as pd
     # Sample code to test OptimizedBVAE with random DataFrame
     samples = 10000   # Number of samples in sample DataFrame
 
@@ -397,11 +398,11 @@ if __name__ == '__main__':
             dataset_size=len(dataset),
             lr=1e-3,
             epochs=1000,
-            beta=1.0,
+            beta=10.0,
             weight_decay=0.01,
             use_VeLO=False,
             variational=True,
-            verbose=False,
+            verbose=True,
     )
     model.prepare_dataset(
             dataset=dataset,
@@ -413,5 +414,7 @@ if __name__ == '__main__':
 
     # Transform dataset
     transformed_data = model.transform(dataset.values)
+    df = pd.DataFrame(transformed_data)
+    df.plot(x=0, y=1, kind="scatter")
 
     code.interact(local=locals())
