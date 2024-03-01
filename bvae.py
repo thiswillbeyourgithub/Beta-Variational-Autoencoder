@@ -163,7 +163,7 @@ class ReducedBVAE(nn.Module):
         """
         return self.decode(self.encode(x))
 
-    def _loss_function_var(self, x, recon_x, mu, logvar):
+    def _loss_function_var(self, x, recon_x, mu, logvar, verbose=False):
         """
         Compute the B-VAE loss function.
 
@@ -175,7 +175,7 @@ class ReducedBVAE(nn.Module):
         """
         BCE = nn.functional.binary_cross_entropy(recon_x, x.view(-1, len(x[0])), reduction='sum')
         KLD = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())
-        if self.verbose:
+        if verbose:
             whi(f"LOSS: BCE: {BCE}    KLD: {KLD}")
         loss = BCE + self.beta * KLD
         if loss < 0:
@@ -261,6 +261,11 @@ class ReducedBVAE(nn.Module):
                     val_loss += loss.item()
             val_loss /= len(self.val_loader.dataset)
             whi(f'Epoch {epoch}: Train Loss: {train_loss}, Val Loss: {val_loss}')
+
+            # display details of the loss
+            if self.variational and self.verbose:
+                self.loss_function(data, *self(data), verbose=True)
+
             if val_loss < best_val_loss:
                 best_val_loss = val_loss
                 no_improvement = 0
