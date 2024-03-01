@@ -36,6 +36,7 @@ class ReducedBVAE(nn.Module):
             beta=1.0,
             weight_decay=0.01,
             use_VeLO=False,
+            use_scheduler=True,
             variational=True,
             verbose=False,
         ):
@@ -48,7 +49,8 @@ class ReducedBVAE(nn.Module):
         :param dataset_size: number of points in the dataset
         :param beta: Scaling factor for KL divergence. Default is 1.0.
         :param epochs: Number of training epochs.
-        :param use_VeLO: optimizer. If False will use AdamW
+        :param use_VeLO: use VeLO optimizer. If False will use AdamW
+        :param use_scheduler: if not using VeLO use a CosineAnnealingLR scheduler. Else ignored.
         :param lr: Learning rate for the AdamW optimizer.
         :param weight_decay: Weight decay for regularization in VeLO.
         :param variational: if False, don't build a variational autoencoder and simply build an autoencoder.
@@ -58,6 +60,7 @@ class ReducedBVAE(nn.Module):
         self.epochs = epochs
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         self.use_VeLO = use_VeLO
+        self.use_scheduler = use_scheduler
         self.beta = beta
         self.verbose = verbose
 
@@ -92,11 +95,12 @@ class ReducedBVAE(nn.Module):
 
         if not self.use_VeLO:
             self.optimizer = optim.AdamW(self.parameters(), lr=lr)
-            self.scheduler = optim.lr_scheduler.CosineAnnealingLR(
-                    self.optimizer,
-                    T_max=50,
-                    verbose=self.verbose,
-                    )
+            if use_scheduler:
+                self.scheduler = optim.lr_scheduler.CosineAnnealingLR(
+                        self.optimizer,
+                        T_max=50,
+                        verbose=self.verbose,
+                        )
         else:
             from pytorch_velo import VeLO  # https://github.com/janEbert/PyTorch-VeLO
             self.optimizer = VeLO(self.parameters(), weight_decay=weight_decay, num_training_steps=epochs * dataset_size, device=self.device, seed=424242)
@@ -274,7 +278,7 @@ class ReducedBVAE(nn.Module):
                 if patience and no_improvement >= patience:
                     whi(f'Early stopping at epoch {epoch} due to no improvement in validation loss.')
                     break
-            if not self.use_VeLO:
+            if hasattr(self, "scheduler"):
                 self.scheduler.step()
         whi(f"Training complete in {int(time.time()-start)}s")
         return best_val_loss
@@ -406,6 +410,7 @@ if __name__ == '__main__':
             beta=100.0,
             weight_decay=0.01,
             use_VeLO=False,
+            use_scheduler=False,
             variational=True,
             verbose=True,
     )
