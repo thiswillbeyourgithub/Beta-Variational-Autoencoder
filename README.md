@@ -1,7 +1,7 @@
 # Beta-Variational-Autoencoder
 Simple Beta-VAE using scikit-learn API, made mostly by prompting GPT-4.
 With a single argument this can instead be a regular autoencoder (no variational).
-The VeLO optimizer can be used (apparently only on cpu and not on cuda?)
+The [VeLO optimizer](https://github.com/janEbert/PyTorch-VeLO) can be used (apparently only on cpu and not on cuda?)
 
 # Example result on handwritten digits:
 ![](./Demo.png)
