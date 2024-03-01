@@ -302,7 +302,7 @@ class OptimizedBVAE:
         Returns a fitted model.
         """
         hidden_dim_candidates = [int(len(dataset) * ratio) for ratio in [0.05, 0.1, 0.2, 0.5]]
-        beta_candidates = [10]
+        beta_candidates = [1]
         if "batch_size" not in self.params:
             batch_size = max(1, dataset.shape[0] // 100)
         best_params = {}
