@@ -404,26 +404,28 @@ if __name__ == '__main__':
     # model = optimized_bvae.fit(dataset)
 
     # or fitting only one BVAE
+    hidden_dim=max(3, int(len(dataset)*0.005))
+    red(f"Number of hidden dimension: {hidden_dim}")
     model = ReducedBVAE(
             input_dim=features,
             z_dim=z_dim,
-            hidden_dim=int(len(dataset)*0.05),
+            hidden_dim=hidden_dim,
             dataset_size=len(dataset),
             lr=1e-3,
-            epochs=1000,
-            beta=100.0,
+            epochs=200,
+            beta=10.0,
             weight_decay=0.01,
             use_VeLO=False,
-            use_scheduler=False,
-            variational=True,
+            use_scheduler=True,
+            variational=False,
             verbose=True,
     )
     model.prepare_dataset(
             dataset=torch.from_numpy(dataset.values),
-            batch_size=max(1, dataset.shape[0] // 100),
+            batch_size=10, #max(1, dataset.shape[0] // 1000),
     )
     model.train_bvae(
-        patience=20
+        patience=100
     )
 
     # Transform dataset
