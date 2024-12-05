@@ -11,6 +11,7 @@ I made this because I couldn't find an appropriate implementation in python / py
 ## Notes
 * There are 2 compression layers and the decompression is symetrical.
 * A wrapper called `OptimizedBVAE` can be used to do a grid search over the hidden_dim parameters then return the best model after further training.
+* This side quest was done hastily, there might be huge mistakes as well as unoptimized code etc. If you see that, please notify me by creating an issue!
 
 
 The optimizer used is AdamW, but `VeLO` can be used from [this repo](https://github.com/janEbert/PyTorch-VeLO).
