@@ -3,6 +3,8 @@ Simple Beta-VAE using scikit-learn API, made mostly by prompting GPT-4.
 With a single argument this can instead be a regular autoencoder (no variational).
 The [VeLO optimizer](https://github.com/janEbert/PyTorch-VeLO) can be used (apparently only on cpu and not on cuda?)
 
+I made this because I couldn't find an appropriate implementation in python / pytorch and needed one for another project: [QuestEA](https://github.com/thiswillbeyourgithub/QuestEA)
+
 # Example result on handwritten digits:
 ![](./Demo.png)
 
